@@ -1,4 +1,3 @@
--- [[ Piruz HUB | PURPLE & DARK EDITION ]] --
 repeat task.wait() until game:IsLoaded()
 
 local Players = game:GetService("Players")
@@ -8,9 +7,9 @@ local LocalPlayer = Players.LocalPlayer
 local ALLOWED_PLACE = 104715542330896 -- PlaceId de Block Spin
 
 local ALLOWED_USERS = {
-    [8216624047] = true, -- UserId autorizado
-    [9493474736] = true, -- UserId autorizado
-    [2646021845] = true, -- UserId autorizado
+    [8216624047] = true, -- UserId PIRUZ
+    [9493474736] = true, -- UserId ALWEFT
+    [2646021845] = true, -- UserId SXULL
 }
 
 if game.PlaceId ~= ALLOWED_PLACE then
@@ -51,12 +50,11 @@ local Settings = {
 -- PALETA DE COLORES DE LA INTERFAZ
 local BlackPure = Color3.fromRGB(10, 10, 12)       -- Negro Absoluto (Fondo principal)
 local DarkGrey = Color3.fromRGB(24, 24, 28)        -- Gris Muy Oscuro (Botones y realces)
-local PurpleLight = Color3.fromRGB(168, 85, 247)   -- Morado Brillante (Textos destacados y acentos)
+local BlueLight = Color3.fromRGB(0, 162, 255)      -- Azul Brillante (Textos destacados y acentos)
 
 -- PALETA DE COLORES DEL ESP
 local GreyESP = Color3.fromRGB(140, 140, 145)      -- Box Gris
-local WhiteESP = Color3.new(1, 1, 1)              -- Nombre Blanco
-local GreenHandsESP = Color3.fromRGB(0, 255, 120)  -- Verde Brillante para las Hands / Armas
+local WhiteESP = Color3.new(1, 1, 1)               -- Nombre Blanco
 local LightGreenDistESP = Color3.fromRGB(160, 255, 160) -- Verde Clarito para los Metros
 
 -- Notification
@@ -68,7 +66,7 @@ local function Notify(msg, color)
     Frame.BackgroundColor3 = BlackPure
     Instance.new("UICorner", Frame)
     local Stroke = Instance.new("UIStroke", Frame)
-    Stroke.Color = color or PurpleLight
+    Stroke.Color = color or BlueLight
     
     local Label = Instance.new("TextLabel", Frame)
     Label.Size = UDim2.new(1, -20, 1, 0)
@@ -86,20 +84,6 @@ local function Notify(msg, color)
         task.wait(0.5)
         NotifyGui:Destroy()
     end)
-end
-
--- Weapon Name
-local function GetTrueWeaponName(char)
-    local tool = char:FindFirstChildOfClass("Tool")
-    if not tool then return "Hands" end
-    local attrName = tool:GetAttribute("ItemName") or tool:GetAttribute("DisplayName")
-    if attrName and not tonumber(tostring(attrName)) then return tostring(attrName) end
-    for _, obj in ipairs(tool:GetDescendants()) do
-        if obj:IsA("StringValue") and obj.Value ~= "" and not tonumber(obj.Value) then
-            if not obj.Value:find("<") then return obj.Value end
-        end
-    end
-    return "Hands"
 end
 
 -- ==================== NO RECOIL AVANZADO ====================
@@ -179,14 +163,12 @@ local ESPObjects = {}
 local function CreateESPObjects()
     local obj = {
         Name = Drawing.new("Text"),
-        Weapon = Drawing.new("Text"),
         DistLabel = Drawing.new("Text"),
         Box = Drawing.new("Square"),
         HealthBarBg = Drawing.new("Square"),
         HealthBar = Drawing.new("Square")
     }
     obj.Name.Size = 14; obj.Name.Center = true; obj.Name.Outline = true; obj.Name.Color = WhiteESP
-    obj.Weapon.Size = 13; obj.Weapon.Center = true; obj.Weapon.Outline = true; obj.Weapon.Color = GreenHandsESP
     obj.DistLabel.Size = 12; obj.DistLabel.Center = true; obj.DistLabel.Outline = true; obj.DistLabel.Color = LightGreenDistESP
     obj.Box.Thickness = 1.8; obj.Box.Color = GreyESP
     obj.HealthBarBg.Filled = true; obj.HealthBarBg.Color = Color3.new(0,0,0)
@@ -197,7 +179,6 @@ end
 local function HideESP(objs)
     if objs then
         objs.Name.Visible = false
-        objs.Weapon.Visible = false
         objs.DistLabel.Visible = false
         objs.Box.Visible = false
         objs.HealthBarBg.Visible = false
@@ -236,7 +217,7 @@ local function UpdateESP()
                 
                 local isWhitelisted = Settings.Whitelist[p.Name] == true
                 
-                objs.Box.Color = isWhitelisted and PurpleLight or GreyESP
+                objs.Box.Color = isWhitelisted and BlueLight or GreyESP
                 objs.Box.Visible = Settings.Box3D
                 objs.Box.Size = Vector2.new(w, h)
                 objs.Box.Position = Vector2.new(x, y)
@@ -245,13 +226,9 @@ local function UpdateESP()
                 objs.Name.Text = p.DisplayName
                 objs.Name.Position = Vector2.new(screenPos.X, y - 20)
 
-                objs.Weapon.Visible = true
-                objs.Weapon.Text = "< " .. GetTrueWeaponName(char) .. " >"
-                objs.Weapon.Position = Vector2.new(screenPos.X, y + h + 6)
-
                 objs.DistLabel.Visible = Settings.Distance
                 objs.DistLabel.Text = "[" .. math.floor(screenPos.Z) .. "m]"
-                objs.DistLabel.Position = Vector2.new(screenPos.X, y + h + 23)
+                objs.DistLabel.Position = Vector2.new(screenPos.X, y + h + 6) -- Ajustado hacia arriba al quitar el texto de arma
 
                 if Settings.HPBar then
                     local hp = math.clamp(char.Humanoid.Health / char.Humanoid.MaxHealth, 0, 1)
@@ -281,7 +258,9 @@ Players.PlayerRemoving:Connect(RemoveESP)
 
 -- ==================== AIMBOT ====================
 local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1.5; FOVCircle.Color = PurpleLight; FOVCircle.Radius = Settings.FOV
+FOVCircle.Thickness = 1.5
+FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+FOVCircle.Radius = Settings.FOV
 
 local function GetAimPart(char)
     if not char then return nil end
@@ -350,8 +329,8 @@ MenuStroke.Thickness = 2
 local Title = Instance.new("TextLabel", Main)
 Title.Size = UDim2.new(1, 0, 0, 50)
 Title.BackgroundTransparency = 1
-Title.Text = "Piruz HUB"
-Title.TextColor3 = PurpleLight
+Title.Text = "Piru HUB"
+Title.TextColor3 = BlueLight
 Title.Font = "GothamBold"
 Title.TextSize = 24
 
@@ -383,7 +362,7 @@ Instance.new("UICorner", SliderBar)
 
 local SliderFill = Instance.new("Frame", SliderBar)
 SliderFill.Size = UDim2.new(0.5, 0, 1, 0)
-SliderFill.BackgroundColor3 = PurpleLight
+SliderFill.BackgroundColor3 = BlueLight
 Instance.new("UICorner", SliderFill)
 
 local dragging = false
@@ -485,7 +464,7 @@ local function UpdateWhitelistMenu()
         if p == LocalPlayer then continue end
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, -10, 0, 35)
-        btn.BackgroundColor3 = Settings.Whitelist[p.Name] and PurpleLight or DarkGrey
+        btn.BackgroundColor3 = Settings.Whitelist[p.Name] and BlueLight or DarkGrey
         btn.Text = p.DisplayName
         btn.TextColor3 = Color3.new(1,1,1)
         btn.Font = "Gotham"
@@ -505,7 +484,7 @@ end
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 75, 0, 75)
 ToggleBtn.Position = UDim2.new(0, 20, 0.5, -37.5)
-ToggleBtn.Text = "Piruz"
+ToggleBtn.Text = "Piru"
 ToggleBtn.BackgroundColor3 = DarkGrey
 ToggleBtn.TextColor3 = Color3.new(1,1,1)
 ToggleBtn.Font = "GothamBold"
@@ -513,7 +492,7 @@ ToggleBtn.TextSize = 16
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1,0)
 
 local ButtonStroke = Instance.new("UIStroke", ToggleBtn)
-ButtonStroke.Color = PurpleLight
+ButtonStroke.Color = BlueLight
 ButtonStroke.Thickness = 1.5
 
 ToggleBtn.MouseButton1Click:Connect(function()
@@ -526,4 +505,4 @@ Main.Visible = true
 UpdateWhitelistMenu()
 Players.PlayerAdded:Connect(UpdateWhitelistMenu)
 
-Notify("Piruz HUB | Autorización Correcta", PurpleLight)
+Notify("Piru HUB | Autorización Correcta", BlueLight)
