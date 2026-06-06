@@ -35,14 +35,14 @@ local Settings = {
     NoRecoil = true,
     FOV = 150,
     AimPart = "Head",
-    ESP = false,           
-    NameESP = false,       
-    DistanceESP = false,   
-    Chams = false,         
+    ESP = true,           
+    NameESP = true,       
+    DistanceESP = true,   
+    Chams = true,         
     WeaponESP = true,     
-    HPBar = false,
+    HPBar = true,
     FOVVisible = true,
-    HideName = true,
+    HideName = false,
     DefaultFOV = Camera.FieldOfView,
     Whitelist = {} 
 }
@@ -179,7 +179,7 @@ local function UpdateHideName()
 end
 task.spawn(function() while task.wait(0.3) do pcall(UpdateHideName) end end)
 
--- ==================== REGISTRO Y ESCANEO DE ARMAS (SIN RAREZAS) ====================
+-- ==================== REGISTRO Y ESCANEO DE ARMAS ====================
 local Items = game:GetService("ReplicatedStorage"):WaitForChild("Items")
 local WeaponRegistry = {}
 
@@ -360,7 +360,7 @@ RunService.RenderStepped:Connect(function()
         local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
         local isWhitelisted = Settings.Whitelist[p.Name] == true
         
-        -- SISTEMA DE CHAMS OPTIMIZADO (SOLO CONTORNO SIN RELLENO)
+        -- SISTEMA DE CHAMS OPTIMIZADO
         if Settings.Chams then
             if not objs.Highlight or objs.Highlight.Parent ~= (gethui and gethui() or game:GetService("CoreGui")) then
                 if objs.Highlight then objs.Highlight:Destroy() end
@@ -387,7 +387,7 @@ RunService.RenderStepped:Connect(function()
             local w = h * 0.62
             local x, y = screenPos.X - w/2, screenPos.Y - h/2
             
-            -- Lógica Dinámica del Hybrid ESP Box
+            -- Hybrid ESP Box
             if Settings.ESP then
                 objs.Drawings.Box.Color = isWhitelisted and Color_NeonBlue or SoftRedESP
                 objs.Drawings.Box.Size = Vector2.new(w, h)
@@ -626,7 +626,7 @@ Subtitle.Font = Enum.Font.GothamBold
 Subtitle.TextSize = 12
 Subtitle.TextXAlignment = "Left"
 
--- ==================== PANEL DE OPCIONES SCROLLABLE (IZQUIERDA) ====================
+-- PANEL DE OPCIONES
 local LeftScrollFrame = Instance.new("ScrollingFrame", ContentFrame)
 LeftScrollFrame.Size = UDim2.new(0.48, 0, 0.83, 0) 
 LeftScrollFrame.Position = UDim2.new(0.03, 0, 0.14, 0)
@@ -744,7 +744,7 @@ AddToggle("Weapon ESP System", "WeaponESP", 9)
 AddToggle("Show HP Bar + Numbers", "HPBar", 10)
 AddToggle("Hide My Name", "HideName", 11)
 
--- Right Whitelist Panel 
+-- Whitelist Panel
 local WLFrame = Instance.new("Frame", ContentFrame)
 WLFrame.Size = UDim2.new(0.45, 0, 0.81, 0); WLFrame.Position = UDim2.new(0.52, 0, 0.15, 0)
 WLFrame.BackgroundColor3 = Color_Card; WLFrame.BorderSizePixel = 0
@@ -786,16 +786,10 @@ local function UpdateWhitelistMenu()
     end
 end
 
--- ==================== CONTROL INTERRUPTOR MENÚ ====================
-local ToggleBtn = Instance.new("TextButton", ScreenGui)
-ToggleBtn.Size = UDim2.new(0, 60, 0, 60); ToggleBtn.Position = UDim2.new(0, 25, 0.5, -30)
-ToggleBtn.Text = "PIRU"; ToggleBtn.BackgroundColor3 = Color_Card; ToggleBtn.TextColor3 = Color_TextMain
-ToggleBtn.Font = Enum.Font.GothamBold; ToggleBtn.TextSize = 13; ToggleBtn.BorderSizePixel = 0
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
-Instance.new("UIStroke", ToggleBtn).Color = Color_NeonBlue
-
+-- ==================== SISTEMA APERTURA EXCLUSIVO POR TECLA (CTRL) ====================
 local isMenuMoving = false
-ToggleBtn.MouseButton1Click:Connect(function()
+
+local function ToggleMenu()
     if isMenuMoving then return end
     isMenuMoving = true
 
@@ -814,6 +808,12 @@ ToggleBtn.MouseButton1Click:Connect(function()
         task.wait(0.4)
         isMenuMoving = false
     end
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.LeftControl then
+        ToggleMenu()
+    end
 end)
 
 -- Initialize Engine
@@ -821,4 +821,4 @@ Main.Visible = true
 UpdateWhitelistMenu()
 Players.PlayerAdded:Connect(UpdateWhitelistMenu)
 
-Notify("Piru HUB | System Updated", Color_NeonBlue)
+Notify("Piru HUB | Control Key Binded", Color_NeonBlue)
