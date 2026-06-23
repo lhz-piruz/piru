@@ -13,6 +13,7 @@ local ALLOWED_USERS = {
     [2646021845] = true, --ap
     [10603802243] = true, --ap
      [9879123874] = true, --ap
+         [9763328724] = true, --ap
 }
 
 if game.PlaceId ~= ALLOWED_PLACE then
