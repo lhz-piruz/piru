@@ -1,24 +1,17 @@
--- [[ Pïruz HUB | PURPLE & DARK EDITION ]] --
+-- [[ Pïruz HUB | UNIVERSAL EDITION - NO MODIFICATIONS ]] --
 repeat task.wait() until game:IsLoaded()
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 -- ==================== SISTEMA DE AUTORIZACIÓN (WHITELIST) ====================
-local ALLOWED_PLACE = 104715542330896
-
 local ALLOWED_USERS = {
     [8216624047] = true, --ap
     [9493474736] = true, --ap
     [2646021845] = true, --ap
     [10603802243] = true, --ap
-     [9879123874] = true, --ap
-         [9763328724] = true, --ap
+    [10893753514] = true, --ap
 }
-
-if game.PlaceId ~= ALLOWED_PLACE then
-    return warn("Este script solo funciona en Block Spin.")
-end
 
 if not ALLOWED_USERS[LocalPlayer.UserId] then
     return warn("No estás autorizado a usar este script.")
@@ -181,7 +174,7 @@ local function UpdateHideName()
 end
 task.spawn(function() while task.wait(0.3) do pcall(UpdateHideName) end end)
 
--- ==================== REGISTRO Y ESCANEO DE ARMAS ====================
+-- ==================== REGISTRO Y ESCANEO DE ARMAS INTACTO ====================
 local Items = game:GetService("ReplicatedStorage"):WaitForChild("Items")
 local WeaponRegistry = {}
 
@@ -442,7 +435,7 @@ RunService.RenderStepped:Connect(function()
                 objs.Drawings.HealthText.Visible = false
             end
 
-            -- CONTROL EXCLUSIVO DE WEAPON ESP
+            -- CONTROL EXCLUSIVO DE WEAPON ESP MANTENIDO
             for _, weaponDraw in pairs(objs.Weapons) do 
                 weaponDraw.Visible = false 
             end
@@ -486,7 +479,7 @@ end)
 
 Players.PlayerRemoving:Connect(RemoveESP)
 
--- ==================== AIMBOT ====================
+-- ==================== AIMBOT ORIGINAL RECOMPUESTO ====================
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1.5; FOVCircle.Color = Color3.new(1,1,1); FOVCircle.Radius = Settings.FOV
 
@@ -505,7 +498,7 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = Settings.FOVVisible and Settings.Aimbot
     FOVCircle.Radius = Settings.FOV
 
-    if not Settings.Aimbot or Camera.FieldOfView >= (Settings.DefaultFOV - 3) then return end
+    if not Settings.Aimbot then return end
     local bestTarget = nil
     local maxD = Settings.FOV
 
@@ -518,12 +511,6 @@ RunService.RenderStepped:Connect(function()
         if not targetPart then continue end
 
         local aimPos = targetPart.Position
-        if Settings.AimPart == "Head" then
-            local root = char:FindFirstChild("HumanoidRootPart")
-            if root and (targetPart.Position.Y - root.Position.Y > 2.5) then
-                aimPos = targetPart.Position - Vector3.new(0, 1.35, 0)
-            end
-        end
 
         local pos, onScreen = Camera:WorldToViewportPoint(aimPos)
         if onScreen then
@@ -622,7 +609,7 @@ local Subtitle = Instance.new("TextLabel", HeaderFrame)
 Subtitle.Size = UDim2.new(1, -40, 0, 20)
 Subtitle.Position = UDim2.new(0, 135, 0.5, -8)
 Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "• wind premium v7.0"
+Subtitle.Text = "• wind universal v7.0"
 Subtitle.TextColor3 = Color_NeonBlue
 Subtitle.Font = Enum.Font.GothamBold
 Subtitle.TextSize = 12
@@ -818,9 +805,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
--- Initialize Engine
 Main.Visible = true
 UpdateWhitelistMenu()
 Players.PlayerAdded:Connect(UpdateWhitelistMenu)
+Players.PlayerRemoving:Connect(UpdateWhitelistMenu)
 
 Notify("Piru HUB | Control Key Binded", Color_NeonBlue)
