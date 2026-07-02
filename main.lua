@@ -332,7 +332,7 @@ local function IniciarScriptOriginal()
         return items
     end
 
-    -- Motor de Render ESP (CORREGIDO EL BUG VISUAL DE REAPARECER)
+    -- MOTOR DE RENDER ESP (REDISEÑADO CONSTANTE)
     local ESPObjects = {}
 
     local function RemoveESP(player)
@@ -346,7 +346,6 @@ local function IniciarScriptOriginal()
                 weaponDraw:Destroy() 
             end
             if ESPObjects[player].Highlight then 
-                objs.Highlight.Enabled = false
                 ESPObjects[player].Highlight:Destroy() 
             end
             ESPObjects[player] = nil
@@ -354,7 +353,8 @@ local function IniciarScriptOriginal()
     end
 
     local function CreateESPObjects(player)
-        RemoveESP(player) 
+        if ESPObjects[player] then return ESPObjects[player] end
+        
         local obj = {
             Drawings = {
                 Name = Drawing.new("Text"), DistLabel = Drawing.new("Text"), Box = Drawing.new("Square"),           
@@ -367,38 +367,50 @@ local function IniciarScriptOriginal()
         obj.Drawings.HealthBarBg.Filled = true; obj.Drawings.HealthBarBg.Color = Color3.new(0,0,0)
         obj.Drawings.HealthBar.Filled = true
         obj.Drawings.HealthText.Size = 12; obj.Drawings.HealthText.Center = false; obj.Drawings.HealthText.Outline = true
+        
         ESPObjects[player] = obj
         return obj
     end
 
-    -- Limpieza forzada cuando reaparecen o se van
-    for _, p in pairs(Players:GetPlayers()) do
-        p.CharacterAdded:Connect(function() RemoveESP(p) end)
+    -- Escucha forzada e instantánea para asignación global
+    local function VincularJugador(p)
+        if p == LocalPlayer then return end
+        CreateESPObjects(p)
+        p.CharacterAdded:Connect(function()
+            task.wait(0.1)
+            CreateESPObjects(p)
+        end)
+        p.CharacterRemoving:Connect(function()
+            local objs = ESPObjects[p]
+            if objs then
+                for _, draw in pairs(objs.Drawings) do draw.Visible = false end
+                for _, wd in pairs(objs.Weapons) do wd.Visible = false end
+                if objs.Highlight then objs.Highlight.Enabled = false end
+            end
+        end)
     end
-    Players.PlayerAdded:Connect(function(p)
-        p.CharacterAdded:Connect(function() RemoveESP(p) end)
-    end)
-    Players.PlayerRemoving:Connect(function(p) RemoveESP(p) end)
+
+    for _, p in pairs(Players:GetPlayers()) do VincularJugador(p) end
+    Players.PlayerAdded:Connect(VincularJugador)
+    Players.PlayerRemoving:Connect(RemoveESP)
 
     RunService.RenderStepped:Connect(function()
         for _, p in pairs(Players:GetPlayers()) do
             if p == LocalPlayer then continue end
-            local char = p.Character
             local objs = ESPObjects[p]
+            if not objs then objs = CreateESPObjects(p) end
             
+            local char = p.Character
             local canRenderAny = (Settings.ESP or Settings.NameESP or Settings.DistanceESP or Settings.WeaponESP or Settings.Chams)
             
-            -- Si no se cumplen los requisitos del personaje vivo, limpiar visibilidad de golpe
+            -- Si no es válido de forma estricta, forzar apagado de capas sin borrar la instancia de la lista
             if not canRenderAny or not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 or not char:FindFirstChild("HumanoidRootPart") then
-                if objs then 
-                    for _, draw in pairs(objs.Drawings) do draw.Visible = false end
-                    for _, wd in pairs(objs.Weapons) do wd.Visible = false end
-                    if objs.Highlight then objs.Highlight.Enabled = false end 
-                end
+                for _, draw in pairs(objs.Drawings) do draw.Visible = false end
+                for _, wd in pairs(objs.Weapons) do wd.Visible = false end
+                if objs.Highlight then objs.Highlight.Enabled = false end 
                 continue
             end
 
-            if not objs then objs = CreateESPObjects(p) end
             local root = char.HumanoidRootPart
             local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
             local isWhitelisted = Settings.Whitelist[p.Name] == true
