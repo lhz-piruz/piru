@@ -7,11 +7,11 @@ local LocalPlayer = Players.LocalPlayer
 -- ==================== CONFIGURACIÓN DE PAGA (LLAVE Y COMPRADORES) ====================
 local KEY_CORRECTA = "PIRU-HUB" -- La contraseña que deben escribir
 local USUARIOS_PERMITIDOS = {
-    [8216624047] = true,   -- Comprador 1 (Agregado)
-    [10893753514] = true,  -- Comprador 2 (Agregado)
-    [7149173878] = true,    -- Comprador 3 (Agregado)
-    [0] = true,            -- Comprador 4 (Espacio Libre: cambia el 0 por su ID)
-    [0] = true,            -- Comprador 5 (Espacio Libre: cambia el 0 por su ID)
+    [8216624047] = true,   -- Comprador 1
+    [10893753514] = true,  -- Comprador 2
+    [7149173878] = true,    -- Comprador 3
+    [0] = true,            -- Comprador 4
+    [0] = true,            -- Comprador 5
 }
 -- ====================================================================================
 
@@ -332,14 +332,23 @@ local function IniciarScriptOriginal()
         return items
     end
 
-    -- Motor de Render ESP
+    -- Motor de Render ESP (CORREGIDO EL BUG VISUAL DE REAPARECER)
     local ESPObjects = {}
 
     local function RemoveESP(player)
         if ESPObjects[player] then
-            for _, object in pairs(ESPObjects[player].Drawings) do object.Visible = false; object:Destroy() end
-            for _, weaponDraw in pairs(ESPObjects[player].Weapons) do weaponDraw.Visible = false; weaponDraw:Destroy() end
-            if ESPObjects[player].Highlight then ESPObjects[player].Highlight:Destroy() end
+            for _, object in pairs(ESPObjects[player].Drawings) do 
+                object.Visible = false
+                object:Destroy() 
+            end
+            for _, weaponDraw in pairs(ESPObjects[player].Weapons) do 
+                weaponDraw.Visible = false
+                weaponDraw:Destroy() 
+            end
+            if ESPObjects[player].Highlight then 
+                objs.Highlight.Enabled = false
+                ESPObjects[player].Highlight:Destroy() 
+            end
             ESPObjects[player] = nil
         end
     end
@@ -362,6 +371,15 @@ local function IniciarScriptOriginal()
         return obj
     end
 
+    -- Limpieza forzada cuando reaparecen o se van
+    for _, p in pairs(Players:GetPlayers()) do
+        p.CharacterAdded:Connect(function() RemoveESP(p) end)
+    end
+    Players.PlayerAdded:Connect(function(p)
+        p.CharacterAdded:Connect(function() RemoveESP(p) end)
+    end)
+    Players.PlayerRemoving:Connect(function(p) RemoveESP(p) end)
+
     RunService.RenderStepped:Connect(function()
         for _, p in pairs(Players:GetPlayers()) do
             if p == LocalPlayer then continue end
@@ -369,8 +387,14 @@ local function IniciarScriptOriginal()
             local objs = ESPObjects[p]
             
             local canRenderAny = (Settings.ESP or Settings.NameESP or Settings.DistanceESP or Settings.WeaponESP or Settings.Chams)
+            
+            -- Si no se cumplen los requisitos del personaje vivo, limpiar visibilidad de golpe
             if not canRenderAny or not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 or not char:FindFirstChild("HumanoidRootPart") then
-                if objs then for _, draw in pairs(objs.Drawings) do draw.Visible = false end; for _, wd in pairs(objs.Weapons) do wd.Visible = false end; if objs.Highlight then objs.Highlight.Enabled = false end end
+                if objs then 
+                    for _, draw in pairs(objs.Drawings) do draw.Visible = false end
+                    for _, wd in pairs(objs.Weapons) do wd.Visible = false end
+                    if objs.Highlight then objs.Highlight.Enabled = false end 
+                end
                 continue
             end
 
@@ -663,20 +687,15 @@ end
 
 -- ==================== LÓGICA DE COMPROBACIÓN DEL BOTÓN DE ENTRADA ====================
 VerifyBtn.MouseButton1Click:Connect(function()
-    -- 1. Verificar si el texto ingresado coincide con la contraseña
     if TextBox.Text == KEY_CORRECTA then
-        
-        -- 2. Verificar si el ID numérico del ejecutor está en la lista de los compradores
         if USUARIOS_PERMITIDOS[LocalPlayer.UserId] then
-            IniciarScriptOriginal() -- Cargar Piruz HUB v7.0
+            IniciarScriptOriginal()
         else
-            -- Si la Key es correcta pero la cuenta no pagó
             TextBox.Text = ""
             TextBox.PlaceholderText = "Tu ID de Roblox no está autorizado."
             BoxStroke.Color = Color3.fromRGB(220, 80, 80)
         end
     else
-        -- Si la Key está mal escrita
         TextBox.Text = ""
         TextBox.PlaceholderText = "KEY INCORRECTA"
         BoxStroke.Color = Color3.fromRGB(220, 80, 80)
