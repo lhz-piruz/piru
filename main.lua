@@ -12,6 +12,7 @@ local ALLOWED_USERS = {
     [10603802243] = true, --ap
     [10893753514] = true, --ap
         [9763328724] = true, --ap
+            [149173878] = true, --ap
 }
 
 if not ALLOWED_USERS[LocalPlayer.UserId] then
