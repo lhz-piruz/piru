@@ -1,4 +1,3 @@
--- [[ Pïruz HUB | UNIVERSAL EDITION - NO MODIFICATIONS ]] --
 repeat task.wait() until game:IsLoaded()
 
 local Players = game:GetService("Players")
@@ -134,6 +133,16 @@ local function IniciarScriptOriginal()
         Whitelist = {} 
     }
 
+    -- Función auxiliar para verificar de forma estricta si el jugador sostiene un arma real
+    local function TieneArmaEquipada()
+        if not LocalPlayer.Character then return false end
+        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool and tool.Name ~= "Fists" then
+            return true
+        end
+        return false
+    end
+
     local function PlaySound(id, vol, pitch)
         local sound = Instance.new("Sound")
         sound.SoundId = "rbxassetid://" .. tostring(id)
@@ -194,7 +203,7 @@ local function IniciarScriptOriginal()
     task.spawn(function()
         local oldIndex
         oldIndex = hookmetamethod(game, "__index", function(self, key)
-            if Settings.NoRecoil and not checkcaller() and type(key) == "string" then
+            if Settings.NoRecoil and IsAiming and TieneArmaEquipada() and not checkcaller() and type(key) == "string" then
                 local k = string.lower(key)
                 if k == "recoil" or k == "recoilcontrol" or k == "kickback" or k == "spread" or k:find("recoil") or k:find("spread") then 
                     return 0 
@@ -206,7 +215,7 @@ local function IniciarScriptOriginal()
 
     task.spawn(function()
         while task.wait(0.2) do
-            if Settings.NoRecoil and LocalPlayer.Character then
+            if Settings.NoRecoil and IsAiming and TieneArmaEquipada() and LocalPlayer.Character then
                 local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
                 if tool then
                     for _, obj in ipairs(tool:GetDescendants()) do
@@ -332,7 +341,7 @@ local function IniciarScriptOriginal()
         return items
     end
 
-    -- MOTOR DE RENDER ESP (REDISEÑADO CONSTANTE)
+    -- MOTOR DE RENDER ESP
     local ESPObjects = {}
 
     local function RemoveESP(player)
@@ -372,7 +381,6 @@ local function IniciarScriptOriginal()
         return obj
     end
 
-    -- Escucha forzada e instantánea para asignación global
     local function VincularJugador(p)
         if p == LocalPlayer then return end
         CreateESPObjects(p)
@@ -403,7 +411,6 @@ local function IniciarScriptOriginal()
             local char = p.Character
             local canRenderAny = (Settings.ESP or Settings.NameESP or Settings.DistanceESP or Settings.WeaponESP or Settings.Chams)
             
-            -- Si no es válido de forma estricta, forzar apagado de capas sin borrar la instancia de la lista
             if not canRenderAny or not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 or not char:FindFirstChild("HumanoidRootPart") then
                 for _, draw in pairs(objs.Drawings) do draw.Visible = false end
                 for _, wd in pairs(objs.Weapons) do wd.Visible = false end
@@ -477,7 +484,7 @@ local function IniciarScriptOriginal()
         end
     end)
 
-    -- Motor Aimbot
+    -- Motor Aimbot (Actualizado: Solo funciona apuntando y filtra la Whitelist)
     local FOVCircle = Drawing.new("Circle")
     FOVCircle.Thickness = 1.5; FOVCircle.Color = Color3.new(1,1,1); FOVCircle.Radius = Settings.FOV
 
@@ -495,16 +502,22 @@ local function IniciarScriptOriginal()
         FOVCircle.Visible = Settings.FOVVisible and Settings.Aimbot
         FOVCircle.Radius = Settings.FOV
 
-        if not Settings.Aimbot or not IsAiming then return end
+        -- Validación estricta: Debe estar el Aimbot encendido, el jugador apuntando (IsAiming) y con un arma real equipada
+        if not Settings.Aimbot or not IsAiming or not TieneArmaEquipada() then return end
+        
         local bestTarget = nil
         local maxD = Settings.FOV
 
         for _, p in pairs(Players:GetPlayers()) do
-            if p == LocalPlayer or Settings.Whitelist[p.Name] then continue end
+            -- Filtro de Whitelist para ignorar amigos guardados en la lista
+            if p == LocalPlayer or Settings.Whitelist[p.Name] == true then continue end
+            
             local char = p.Character
             if not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then continue end
+            
             local targetPart = GetAimPart(char)
             if not targetPart then continue end
+            
             local pos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
             if onScreen then
                 local dist = (Vector2.new(pos.X, pos.Y) - FOVCircle.Position).Magnitude
@@ -568,7 +581,7 @@ local function IniciarScriptOriginal()
     local Subtitle = Instance.new("TextLabel", HeaderFrame); Subtitle.Size = UDim2.new(1, -40, 0, 20); Subtitle.Position = UDim2.new(0, 135, 0.5, -8); Subtitle.BackgroundTransparency = 1
     Subtitle.Text = "• wind universal v7.0"; Subtitle.TextColor3 = Color_NeonBlue; Subtitle.Font = Enum.Font.GothamBold; Subtitle.TextSize = 12; Subtitle.TextXAlignment = "Left"
 
-    -- Panel Scroll Izquierdo
+    -- Panel Scroll Izquierdo (Toggles y Configuraciones)
     local LeftScrollFrame = Instance.new("ScrollingFrame", ContentFrame)
     LeftScrollFrame.Size = UDim2.new(0.48, 0, 0.83, 0); LeftScrollFrame.Position = UDim2.new(0.03, 0, 0.14, 0); LeftScrollFrame.BackgroundTransparency = 1; LeftScrollFrame.BorderSizePixel = 0; LeftScrollFrame.ScrollBarThickness = 0; LeftScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 520) 
     local LeftLayout = Instance.new("UIListLayout", LeftScrollFrame); LeftLayout.Padding = UDim.new(0, 7); LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -629,87 +642,104 @@ local function IniciarScriptOriginal()
         end
         btn.MouseEnter:Connect(function() if not Settings[key] then FastTween(btn, {BackgroundColor3 = Color_CardDark}) end end)
         btn.MouseLeave:Connect(function() if not Settings[key] then FastTween(btn, {BackgroundColor3 = Color_Card}) end end)
-        btn.MouseButton1Click:Connect(function() Settings[key] = not Settings[key]; updateVisuals(false); if key == "HideName" then UpdateHideName() end end)
+        btn.MouseButton1Click:Connect(function() 
+            Settings[key] = not Settings[key]; 
+            updateVisuals(false); 
+            if key == "HideName" then 
+                UpdateHideName() 
+            end 
+        end)
+
         updateVisuals(true)
     end
 
-    AddToggle("Aimbot Master", "Aimbot", 3)
-    AddToggle("No Recoil System", "NoRecoil", 4)
-    AddToggle("Hybrid ESP Box", "ESP", 5)            
-    AddToggle("Name ESP System", "NameESP", 6)       
-    AddToggle("Distance ESP System", "DistanceESP", 7) 
-    AddToggle("Visual Chams System", "Chams", 8)       
-    AddToggle("Weapon ESP System", "WeaponESP", 9) 
-    AddToggle("Show HP Bar + Numbers", "HPBar", 10)
-    AddToggle("Hide My Name", "HideName", 11)
+    AddToggle("Aimbot Assist", "Aimbot", 3)
+    AddToggle("Estabilizador NoRecoil", "NoRecoil", 4)
+    AddToggle("Visuales ESP Jugadores", "ESP", 5)
+    AddToggle("Mostrar Nombres", "NameESP", 6)
+    AddToggle("Mostrar Distancia", "DistanceESP", 7)
+    AddToggle("Chams (Glow Esqueleto)", "Chams", 8)
+    AddToggle("Radar de Armas Portadas", "WeaponESP", 9)
+    AddToggle("Barra de Vida Dinámica", "HPBar", 10)
+    AddToggle("Circulo FOV Visible", "FOVVisible", 11)
+    AddToggle("Modo Incógnito (Hide Name)", "HideName", 12)
 
-    -- Interfaz de la Whitelist
-    local WLFrame = Instance.new("Frame", ContentFrame); WLFrame.Size = UDim2.new(0.45, 0, 0.81, 0); WLFrame.Position = UDim2.new(0.52, 0, 0.15, 0); WLFrame.BackgroundColor3 = Color_Card; WLFrame.BorderSizePixel = 0
-    Instance.new("UICorner", WLFrame).CornerRadius = UDim.new(0, 14); Instance.new("UIStroke", WLFrame).Color = Color_Border
-    local WLTitle = Instance.new("TextLabel", WLFrame); WLTitle.Size = UDim2.new(1, 0, 0, 45); WLTitle.BackgroundTransparency = 1; WLTitle.Text = "   Jugadores en Servidor"
-    WLTitle.TextColor3 = Color_TextMain; WLTitle.Font = Enum.Font.GothamBold; WLTitle.TextSize = 14; WLTitle.TextXAlignment = "Left"
+    -- PANEL DE WHITELIST (LADO DERECHO)
+    local RightPanel = Instance.new("Frame", ContentFrame)
+    RightPanel.Size = UDim2.new(0.44, 0, 0.83, 0); RightPanel.Position = UDim2.new(0.53, 0, 0.14, 0); RightPanel.BackgroundColor3 = Color_Card; RightPanel.BorderSizePixel = 0
+    Instance.new("UICorner", RightPanel).CornerRadius = UDim.new(0, 14)
+    local RightStroke = Instance.new("UIStroke", RightPanel); RightStroke.Color = Color_Border
 
-    local WLScrolling = Instance.new("ScrollingFrame", WLFrame); WLScrolling.Size = UDim2.new(1, -16, 1, -55); WLScrolling.Position = UDim2.new(0, 8, 0, 45); WLScrolling.BackgroundTransparency = 1; WLScrolling.BorderSizePixel = 0; WLScrolling.ScrollBarThickness = 4; WLScrolling.ScrollBarImageColor3 = Color_NeonBlue
-    local WLLayout = Instance.new("UIListLayout", WLScrolling); WLLayout.Padding = UDim.new(0, 6); WLLayout.SortOrder = Enum.SortOrder.Name
+    local WLTitle = Instance.new("TextLabel", RightPanel)
+    WLTitle.Size = UDim2.new(1, 0, 0, 35); WLTitle.BackgroundTransparency = 1; WLTitle.Text = "SISTEMA DE WHITELIST"; WLTitle.TextColor3 = Color_NeonBlue
+    WLTitle.Font = Enum.Font.GothamBold; WLTitle.TextSize = 13
 
-    local function UpdateWhitelistMenu()
-        for _, child in pairs(WLScrolling:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
-        for _, p in pairs(Players:GetPlayers()) do
+    local WLScroll = Instance.new("ScrollingFrame", RightPanel)
+    WLScroll.Size = UDim2.new(1, -20, 1, -50); WLScroll.Position = UDim2.new(0, 10, 0, 40); WLScroll.BackgroundTransparency = 1; WLScroll.BorderSizePixel = 0
+    WLScroll.ScrollBarThickness = 2; WLScroll.ScrollBarImageColor3 = Color_Border; WLScroll.CanvasSize = UDim2.new(0,0,0,0)
+    local WLListLayout = Instance.new("UIListLayout", WLScroll); WLListLayout.Padding = UDim.new(0, 5)
+
+    local function ActualizarPanelWhitelist()
+        for _, oldBtn in ipairs(WLScroll:GetChildren()) do if oldBtn:IsA("TextButton") then oldBtn:Destroy() end end
+        
+        for _, p in ipairs(Players:GetPlayers()) do
             if p == LocalPlayer then continue end
-            local btn = Instance.new("TextButton"); btn.Size = UDim2.new(1, -8, 0, 40); btn.BorderSizePixel = 0; btn.Text = "   " .. p.DisplayName
-            btn.Font = Enum.Font.GothamBold; btn.TextSize = 13; btn.TextXAlignment = "Left"; local wlStroke = Instance.new("UIStroke", btn); wlStroke.Thickness = 1.2; btn.Parent = WLScrolling
-            if Settings.Whitelist[p.Name] then btn.BackgroundColor3 = Color_NeonBlue; btn.TextColor3 = Color_TextMain; wlStroke.Color = Color_NeonBlue
-            else btn.BackgroundColor3 = Color_CardDark; btn.TextColor3 = Color_TextSub; wlStroke.Color = Color_Border end
-
-            btn.MouseButton1Click:Connect(function()
-                Settings.Whitelist[p.Name] = not Settings.Whitelist[p.Name]
-                if Settings.Whitelist[p.Name] then PlayWindToggleOn() else PlayWindToggleOff() end
-                Notify(Settings.Whitelist[p.Name] and "Añadido a Whitelist: " .. p.DisplayName or "Removido de Whitelist: " .. p.DisplayName)
-                UpdateWhitelistMenu()
+            
+            local pBtn = Instance.new("TextButton", WLScroll)
+            pBtn.Size = UDim2.new(1, -5, 0, 30); pBtn.BorderSizePixel = 0; pBtn.Text = "  " .. p.DisplayName .. " (@" .. p.Name .. ")"
+            pBtn.Font = Enum.Font.Gotham; pBtn.TextSize = 12; pBtn.TextXAlignment = "Left"; Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
+            local pStroke = Instance.new("UIStroke", pBtn); pStroke.Thickness = 1
+            
+            local function RefreshButtonVisuals()
+                if Settings.Whitelist[p.Name] then
+                    pBtn.BackgroundColor3 = Color_NeonBlueDim; pBtn.TextColor3 = Color_TextMain; pStroke.Color = Color_NeonBlue
+                else
+                    pBtn.BackgroundColor3 = Color_CardDark; pBtn.TextColor3 = Color_TextSub; pStroke.Color = Color_Border
+                end
+            end
+            
+            pBtn.MouseButton1Click:Connect(function()
+                if Settings.Whitelist[p.Name] then
+                    Settings.Whitelist[p.Name] = nil
+                    PlayWindToggleOff()
+                else
+                    Settings.Whitelist[p.Name] = true
+                    PlayWindToggleOn()
+                end
+                RefreshButtonVisuals()
             end)
+            
+            RefreshButtonVisuals()
         end
+        WLScroll.CanvasSize = UDim2.new(0, 0, 0, WLListLayout.AbsoluteContentSize.Y + 10)
     end
 
-    -- Control de Apertura por CTRL
-    local isMenuMoving = false
-    local function ToggleMenu()
-        if isMenuMoving then return end
-        isMenuMoving = true
-        if Main.Visible then
-            PlayWindMenuClose()
-            FastTween(Main, {Size = UDim2.new(0, 660, 0, 0)}, 0.35, Enum.EasingStyle.Back)
-            task.wait(0.25); Main.Visible = false; isMenuMoving = false
-        else
-            Main.Visible = true; PlayWindMenuOpen(); UpdateWhitelistMenu()
-            FastTween(Main, {Size = UDim2.new(0, 660, 0, 520)}, 0.4, Enum.EasingStyle.Back)
-            task.wait(0.3); isMenuMoving = false
-        end
-    end
+    ActualizarPanelWhitelist()
+    Players.PlayerAdded:Connect(function() task.wait(0.5) ActualizarPanelWhitelist() end)
+    Players.PlayerRemoving:Connect(function() task.wait(0.5) ActualizarPanelWhitelist() end)
 
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and (input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl) then ToggleMenu() end
+    -- Control de Apertura con la Tecla Control Izquierdo (LeftControl)
+    UserInputService.InputBegan:Connect(function(input, gpe)
+        if gpe then return end
+        if input.KeyCode == Enum.KeyCode.LeftControl then
+            Main.Visible = not Main.Visible
+            if Main.Visible then PlayWindMenuOpen() else PlayWindMenuClose() end
+        end
     end)
 
-    Players.PlayerAdded:Connect(function() task.wait(0.5) if Main.Visible then UpdateWhitelistMenu() end end)
-    Players.PlayerRemoving:Connect(function() task.wait(0.5) if Main.Visible then UpdateWhitelistMenu() end end)
-
-    Main.Size = UDim2.new(0, 660, 0, 0); Main.Visible = false
-    Notify("Piruz HUB Iniciado - Presiona CTRL", Color_NeonBlue)
+    Notify("Pïruz HUB Activado exitosamente. Tecla [Left Control]", Color_NeonBlue)
 end
 
--- ==================== LÓGICA DE COMPROBACIÓN DEL BOTÓN DE ENTRADA ====================
+-- Sistema de Autenticación de Llave
 VerifyBtn.MouseButton1Click:Connect(function()
-    if TextBox.Text == KEY_CORRECTA then
-        if USUARIOS_PERMITIDOS[LocalPlayer.UserId] then
-            IniciarScriptOriginal()
-        else
-            TextBox.Text = ""
-            TextBox.PlaceholderText = "Tu ID de Roblox no está autorizado."
-            BoxStroke.Color = Color3.fromRGB(220, 80, 80)
-        end
+    if TextBox.Text == KEY_CORRECTA or USUARIOS_PERMITIDOS[LocalPlayer.UserId] then
+        IniciarScriptOriginal()
     else
         TextBox.Text = ""
-        TextBox.PlaceholderText = "KEY INCORRECTA"
-        BoxStroke.Color = Color3.fromRGB(220, 80, 80)
+        TextBox.PlaceholderText = "LLAVE INCORRECTA"
+        BoxStroke.Color = Color3.fromRGB(255, 50, 50)
+        task.wait(1.5)
+        BoxStroke.Color = Color_Border
+        TextBox.PlaceholderText = "Escribe la Key aquí..."
     end
 end)
