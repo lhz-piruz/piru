@@ -7,9 +7,9 @@ local LocalPlayer = Players.LocalPlayer
 local KEY_CORRECTA = "PIRU-HUB" -- La contraseña que deben escribir
 local USUARIOS_PERMITIDOS = {
     [8216624047] = true,   -- Comprador 1
-    [0] = true,  -- Comprador 2
-    [0] = true,    -- Comprador 3
-    [0] = true,    -- Comprador 4
+    [10603802243] = true,  -- Comprador 2
+    [7149173878] = true,    -- Comprador 3
+    [9763328724] = true,    -- Comprador 4
     [0] = true,            -- Comprador 5
 }
 -- ====================================================================================
@@ -23,24 +23,20 @@ local Camera = workspace.CurrentCamera
 -- Variables de control para el apuntado
 local IsAiming = false
 
--- PALETA DE COLORES CIBERNÉTICOS INTERFAZ
-local Color_Backdrop = Color3.fromRGB(8, 9, 13)      
-local Color_Card = Color3.fromRGB(16, 18, 26)        
-local Color_CardDark = Color3.fromRGB(11, 12, 18)    
-local Color_NeonBlue = Color3.fromRGB(0, 166, 255)   
-local Color_NeonBlueDim = Color3.fromRGB(0, 50, 100) 
-local Color_TextMain = Color3.fromRGB(255, 255, 255) 
-local Color_TextSub = Color3.fromRGB(135, 143, 166)  
-local Color_Border = Color3.fromRGB(28, 32, 46)      
+-- PALETA DE COLORES COMBINADA (FONDO NEGRO Y ROJO OSCURO)
+local Color_Backdrop = Color3.fromRGB(0, 0, 0)         -- Fondo Negro Absoluto
+local Color_Card = Color3.fromRGB(15, 5, 5)            -- Fondo de tarjetas (Negro con tono rojo muy sutil)
+local Color_CardDark = Color3.fromRGB(10, 0, 0)        -- Fondo secundario más oscuro
+local Color_NeonBlue = Color3.fromRGB(180, 0, 0)       -- Rojo Oscuro Brillante (Sustituye al azul neón activo)
+local Color_NeonBlueDim = Color3.fromRGB(60, 0, 0)     -- Rojo Oscuro Apagado (Sustituye al azul apagado)
+local Color_TextMain = Color3.fromRGB(255, 230, 230)   -- Texto Principal Blanco/Rojizo
+local Color_TextSub = Color3.fromRGB(150, 100, 100)    -- Texto Secundario Rojo Opaco
+local Color_Border = Color3.fromRGB(50, 5, 5)          -- Bordes Rojo Muy Oscuro
 
 -- ESP Colores
-local SoftRedESP = Color3.fromRGB(220, 80, 80)       
+local SoftRedESP = Color3.fromRGB(220, 40, 40)       
 local WhiteESP = Color3.new(1, 1, 1)
-local LightGreenDistESP = Color3.fromRGB(160, 255, 160)
-
--- Colores Chams
-local ChamsEnemyColor = Color3.fromRGB(255, 0, 0)     
-local ChamsWhitelistColor = Color3.fromRGB(0, 255, 0) 
+local LightGreenDistESP = Color3.fromRGB(255, 160, 160) -- Distancia en tono rojizo claro para combinar
 
 -- Crear la interfaz de la Key (Bloqueo de pantalla)
 local KeyGui = Instance.new("ScreenGui", (gethui and gethui()) or game:GetService("CoreGui"))
@@ -101,39 +97,83 @@ Instance.new("UICorner", VerifyBtn).CornerRadius = UDim.new(0, 8)
 local function IniciarScriptOriginal()
     KeyGui:Destroy()
 
-    -- Detectar cuando mantienes o sueltas el clic derecho (apuntar)
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton2 then
-            IsAiming = true
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton2 then
-            IsAiming = false
-        end
-    end)
+    local originalName = LocalPlayer.Name
+    local originalDisplayName = LocalPlayer.DisplayName
 
     -- Settings
     local Settings = {
         Aimbot = true,
+        AimKey = Enum.UserInputType.MouseButton2, -- Clic derecho por defecto
         NoRecoil = true,
+        NameOne = false, 
         FOV = 150,
         AimPart = "Head",
         ESP = true,           
         NameESP = true,       
         DistanceESP = true,   
-        Chams = true,         
+        SkeletonESP = true,   -- Reemplazo de Chams por Skeleton     
         WeaponESP = true,     
         HPBar = true,
         FOVVisible = true,
-        HideName = false,
         DefaultFOV = Camera.FieldOfView,
         Whitelist = {} 
     }
 
-    -- Función auxiliar para verificar de forma estricta si el jugador sostiene un arma real
+    -- Detectar cuando se presiona o suelta la tecla para apuntar
+    local function CheckInput(input, state)
+        if input.UserInputType == Settings.AimKey then
+            IsAiming = state
+        end
+    end
+
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        CheckInput(input, true)
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        CheckInput(input, false)
+    end)
+
+    -- Cambio de nombre reactivo (Name 1)
+    task.spawn(function()
+        while task.wait(0.1) do
+            pcall(function()
+                local char = LocalPlayer.Character
+                if Settings.NameOne then
+                    if char then
+                        local humanoid = char:FindFirstChildOfClass("Humanoid")
+                        if humanoid and humanoid.DisplayName ~= "1" then
+                            humanoid.DisplayName = "1"
+                        end
+                        for _, obj in ipairs(char:GetDescendants()) do
+                            if obj:IsA("TextLabel") or obj:IsA("TextBox") then
+                                if obj.Text == originalName or obj.Text == originalDisplayName then
+                                    obj.Text = "1"
+                                end
+                            end
+                        end
+                    end
+                else
+                    if char then
+                        local humanoid = char:FindFirstChildOfClass("Humanoid")
+                        if humanoid and humanoid.DisplayName ~= originalDisplayName then
+                            humanoid.DisplayName = originalDisplayName
+                        end
+                        for _, obj in ipairs(char:GetDescendants()) do
+                            if obj:IsA("TextLabel") or obj:IsA("TextBox") then
+                                if obj.Text == "1" then
+                                    obj.Text = originalDisplayName
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+
+    -- Función auxiliar para verificar si el jugador sostiene un arma real
     local function TieneArmaEquipada()
         if not LocalPlayer.Character then return false end
         local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
@@ -237,24 +277,6 @@ local function IniciarScriptOriginal()
         end
     end)
 
-    local function UpdateHideName()
-        local character = LocalPlayer.Character
-        if not character then return end
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if Settings.HideName then
-            if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
-            for _, obj in ipairs(character:GetDescendants()) do
-                if obj:IsA("BillboardGui") then obj.Enabled = false end
-            end
-        else
-            if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer end
-            for _, obj in ipairs(character:GetDescendants()) do
-                if obj:IsA("BillboardGui") then obj.Enabled = true end
-            end
-        end
-    end
-    task.spawn(function() while task.wait(0.3) do pcall(UpdateHideName) end end)
-
     -- Registro de Armas
     local Items = game:GetService("ReplicatedStorage"):WaitForChild("Items")
     local WeaponRegistry = {}
@@ -344,6 +366,33 @@ local function IniciarScriptOriginal()
     -- MOTOR DE RENDER ESP
     local ESPObjects = {}
 
+    -- Estructura de conexiones para Skeleton ESP (soporta R6 y R15)
+    local SkeletonConnections = {
+        R15 = {
+            {"Head", "UpperTorso"},
+            {"UpperTorso", "LowerTorso"},
+            {"UpperTorso", "LeftUpperArm"},
+            {"LeftUpperArm", "LeftLowerArm"},
+            {"LeftLowerArm", "LeftHand"},
+            {"UpperTorso", "RightUpperArm"},
+            {"RightUpperArm", "RightLowerArm"},
+            {"RightLowerArm", "RightHand"},
+            {"LowerTorso", "LeftUpperLeg"},
+            {"LeftUpperLeg", "LeftLowerLeg"},
+            {"LeftLowerLeg", "LeftFoot"},
+            {"LowerTorso", "RightUpperLeg"},
+            {"RightUpperLeg", "RightLowerLeg"},
+            {"RightLowerLeg", "RightFoot"}
+        },
+        R6 = {
+            {"Head", "Torso"},
+            {"Torso", "Left Arm"},
+            {"Torso", "Right Arm"},
+            {"Torso", "Left Leg"},
+            {"Torso", "Right Leg"}
+        }
+    }
+
     local function RemoveESP(player)
         if ESPObjects[player] then
             for _, object in pairs(ESPObjects[player].Drawings) do 
@@ -354,8 +403,9 @@ local function IniciarScriptOriginal()
                 weaponDraw.Visible = false
                 weaponDraw:Destroy() 
             end
-            if ESPObjects[player].Highlight then 
-                ESPObjects[player].Highlight:Destroy() 
+            for _, line in ipairs(ESPObjects[player].SkeletonLines) do
+                line.Visible = false
+                line:Destroy()
             end
             ESPObjects[player] = nil
         end
@@ -368,7 +418,9 @@ local function IniciarScriptOriginal()
             Drawings = {
                 Name = Drawing.new("Text"), DistLabel = Drawing.new("Text"), Box = Drawing.new("Square"),           
                 HealthBarBg = Drawing.new("Square"), HealthBar = Drawing.new("Square"), HealthText = Drawing.new("Text")       
-            }, Weapons = {}, Highlight = nil
+            }, 
+            Weapons = {}, 
+            SkeletonLines = {}
         }
         obj.Drawings.Name.Size = 14; obj.Drawings.Name.Center = true; obj.Drawings.Name.Outline = true; obj.Drawings.Name.Color = WhiteESP
         obj.Drawings.DistLabel.Size = 12; obj.Drawings.DistLabel.Center = true; obj.Drawings.DistLabel.Outline = true; obj.Drawings.DistLabel.Color = LightGreenDistESP
@@ -377,6 +429,15 @@ local function IniciarScriptOriginal()
         obj.Drawings.HealthBar.Filled = true
         obj.Drawings.HealthText.Size = 12; obj.Drawings.HealthText.Center = false; obj.Drawings.HealthText.Outline = true
         
+        -- Inicializar 15 líneas para el esqueleto
+        for i = 1, 15 do
+            local line = Drawing.new("Line")
+            line.Thickness = 1.5
+            line.Color = SoftRedESP
+            line.Visible = false
+            table.insert(obj.SkeletonLines, line)
+        end
+
         ESPObjects[player] = obj
         return obj
     end
@@ -393,7 +454,7 @@ local function IniciarScriptOriginal()
             if objs then
                 for _, draw in pairs(objs.Drawings) do draw.Visible = false end
                 for _, wd in pairs(objs.Weapons) do wd.Visible = false end
-                if objs.Highlight then objs.Highlight.Enabled = false end
+                for _, line in ipairs(objs.SkeletonLines) do line.Visible = false end
             end
         end)
     end
@@ -409,30 +470,53 @@ local function IniciarScriptOriginal()
             if not objs then objs = CreateESPObjects(p) end
             
             local char = p.Character
-            local canRenderAny = (Settings.ESP or Settings.NameESP or Settings.DistanceESP or Settings.WeaponESP or Settings.Chams)
+            local canRenderAny = (Settings.ESP or Settings.NameESP or Settings.DistanceESP or Settings.WeaponESP or Settings.SkeletonESP)
             
             if not canRenderAny or not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 or not char:FindFirstChild("HumanoidRootPart") then
                 for _, draw in pairs(objs.Drawings) do draw.Visible = false end
                 for _, wd in pairs(objs.Weapons) do wd.Visible = false end
-                if objs.Highlight then objs.Highlight.Enabled = false end 
+                for _, line in ipairs(objs.SkeletonLines) do line.Visible = false end
                 continue
             end
 
             local root = char.HumanoidRootPart
             local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
             local isWhitelisted = Settings.Whitelist[p.Name] == true
-            
-            if Settings.Chams then
-                if not objs.Highlight or objs.Highlight.Parent ~= (gethui and gethui() or game:GetService("CoreGui")) then
-                    if objs.Highlight then objs.Highlight:Destroy() end
-                    local hl = Instance.new("Highlight")
-                    hl.FillTransparency = 1.00; hl.OutlineTransparency = 0.1; hl.Adornee = char
-                    hl.Parent = (gethui and gethui()) or game:GetService("CoreGui")
-                    objs.Highlight = hl
-                else objs.Highlight.Adornee = char end
-                objs.Highlight.OutlineColor = isWhitelisted and ChamsWhitelistColor or ChamsEnemyColor
-                objs.Highlight.Enabled = true
-            else if objs.Highlight then objs.Highlight.Enabled = false end end
+            local colToUse = isWhitelisted and Color_NeonBlue or SoftRedESP
+
+            -- Render del Skeleton ESP
+            if onScreen and Settings.SkeletonESP then
+                local isR15 = char.Humanoid.RigType == Enum.HumanoidRigType.R15
+                local connections = isR15 and SkeletonConnections.R15 or SkeletonConnections.R6
+                local lineIndex = 1
+
+                for _, pair in ipairs(connections) do
+                    local partA = char:FindFirstChild(pair[1])
+                    local partB = char:FindFirstChild(pair[2])
+
+                    if partA and partB then
+                        local posA, onScreenA = Camera:WorldToViewportPoint(partA.Position)
+                        local posB, onScreenB = Camera:WorldToViewportPoint(partB.Position)
+
+                        if onScreenA and onScreenB then
+                            local line = objs.SkeletonLines[lineIndex]
+                            if line then
+                                line.From = Vector2.new(posA.X, posA.Y)
+                                line.To = Vector2.new(posB.X, posB.Y)
+                                line.Color = colToUse
+                                line.Visible = true
+                                lineIndex = lineIndex + 1
+                            end
+                        end
+                    end
+                end
+                -- Ocultar las líneas sobrantes no usadas
+                for i = lineIndex, #objs.SkeletonLines do
+                    objs.SkeletonLines[i].Visible = false
+                end
+            else
+                for _, line in ipairs(objs.SkeletonLines) do line.Visible = false end
+            end
 
             if onScreen then
                 local h = (Camera.ViewportSize.Y / screenPos.Z) * 2.6
@@ -440,7 +524,7 @@ local function IniciarScriptOriginal()
                 local x, y = screenPos.X - w/2, screenPos.Y - h/2
                 
                 if Settings.ESP then
-                    objs.Drawings.Box.Color = isWhitelisted and Color_NeonBlue or SoftRedESP
+                    objs.Drawings.Box.Color = colToUse
                     objs.Drawings.Box.Size = Vector2.new(w, h); objs.Drawings.Box.Position = Vector2.new(x, y); objs.Drawings.Box.Visible = true
                 else objs.Drawings.Box.Visible = false end
 
@@ -484,7 +568,7 @@ local function IniciarScriptOriginal()
         end
     end)
 
-    -- Motor Aimbot (Actualizado: Solo funciona apuntando y filtra la Whitelist)
+    -- Motor Aimbot
     local FOVCircle = Drawing.new("Circle")
     FOVCircle.Thickness = 1.5; FOVCircle.Color = Color3.new(1,1,1); FOVCircle.Radius = Settings.FOV
 
@@ -502,14 +586,12 @@ local function IniciarScriptOriginal()
         FOVCircle.Visible = Settings.FOVVisible and Settings.Aimbot
         FOVCircle.Radius = Settings.FOV
 
-        -- Validación estricta: Debe estar el Aimbot encendido, el jugador apuntando (IsAiming) y con un arma real equipada
         if not Settings.Aimbot or not IsAiming or not TieneArmaEquipada() then return end
         
         local bestTarget = nil
         local maxD = Settings.FOV
 
         for _, p in pairs(Players:GetPlayers()) do
-            -- Filtro de Whitelist para ignorar amigos guardados en la lista
             if p == LocalPlayer or Settings.Whitelist[p.Name] == true then continue end
             
             local char = p.Character
@@ -581,17 +663,22 @@ local function IniciarScriptOriginal()
     local Subtitle = Instance.new("TextLabel", HeaderFrame); Subtitle.Size = UDim2.new(1, -40, 0, 20); Subtitle.Position = UDim2.new(0, 135, 0.5, -8); Subtitle.BackgroundTransparency = 1
     Subtitle.Text = "• wind universal v7.0"; Subtitle.TextColor3 = Color_NeonBlue; Subtitle.Font = Enum.Font.GothamBold; Subtitle.TextSize = 12; Subtitle.TextXAlignment = "Left"
 
-    -- Panel Scroll Izquierdo (Toggles y Configuraciones)
-    local LeftScrollFrame = Instance.new("ScrollingFrame", ContentFrame)
-    LeftScrollFrame.Size = UDim2.new(0.48, 0, 0.83, 0); LeftScrollFrame.Position = UDim2.new(0.03, 0, 0.14, 0); LeftScrollFrame.BackgroundTransparency = 1; LeftScrollFrame.BorderSizePixel = 0; LeftScrollFrame.ScrollBarThickness = 0; LeftScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 520) 
-    local LeftLayout = Instance.new("UIListLayout", LeftScrollFrame); LeftLayout.Padding = UDim.new(0, 7); LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    -- PANEL IZQUIERDO COMPACTO (TODO JUNTO, SIN SCROLL)
+    local LeftPanelFrame = Instance.new("Frame", ContentFrame)
+    LeftPanelFrame.Size = UDim2.new(0.48, 0, 0.83, 0)
+    LeftPanelFrame.Position = UDim2.new(0.03, 0, 0.14, 0)
+    LeftPanelFrame.BackgroundTransparency = 1
+    
+    local LeftLayout = Instance.new("UIListLayout", LeftPanelFrame)
+    LeftLayout.Padding = UDim.new(0, 4) -- Menor espaciado para agrupar todo
+    LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-    -- Slider FOV Card
-    local FOVCard = Instance.new("Frame", LeftScrollFrame); FOVCard.Size = UDim2.new(1, -6, 0, 65); FOVCard.BackgroundColor3 = Color_Card; FOVCard.BorderSizePixel = 0; FOVCard.LayoutOrder = 1
-    Instance.new("UICorner", FOVCard).CornerRadius = UDim.new(0, 12); Instance.new("UIStroke", FOVCard).Color = Color_Border
-    local FOVLabel = Instance.new("TextLabel", FOVCard); FOVLabel.Size = UDim2.new(1, -30, 0, 25); FOVLabel.Position = UDim2.new(0, 15, 0, 6); FOVLabel.BackgroundTransparency = 1
-    FOVLabel.Text = "Rango de FOV: 150"; FOVLabel.TextColor3 = Color_TextMain; FOVLabel.Font = Enum.Font.GothamBold; FOVLabel.TextSize = 13; FOVLabel.TextXAlignment = "Left"
-    local SliderBar = Instance.new("Frame", FOVCard); SliderBar.Size = UDim2.new(0, 250, 0, 6); SliderBar.Position = UDim2.new(0.05, 0, 0.68, 0); SliderBar.BackgroundColor3 = Color_CardDark; SliderBar.BorderSizePixel = 0; Instance.new("UICorner", SliderBar)
+    -- Slider FOV Card (Altura Reducida)
+    local FOVCard = Instance.new("Frame", LeftPanelFrame); FOVCard.Size = UDim2.new(1, -6, 0, 48); FOVCard.BackgroundColor3 = Color_Card; FOVCard.BorderSizePixel = 0; FOVCard.LayoutOrder = 1
+    Instance.new("UICorner", FOVCard).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", FOVCard).Color = Color_Border
+    local FOVLabel = Instance.new("TextLabel", FOVCard); FOVLabel.Size = UDim2.new(1, -30, 0, 18); FOVLabel.Position = UDim2.new(0, 12, 0, 4); FOVLabel.BackgroundTransparency = 1
+    FOVLabel.Text = "Rango de FOV: 150"; FOVLabel.TextColor3 = Color_TextMain; FOVLabel.Font = Enum.Font.GothamBold; FOVLabel.TextSize = 11; FOVLabel.TextXAlignment = "Left"
+    local SliderBar = Instance.new("Frame", FOVCard); SliderBar.Size = UDim2.new(0, 260, 0, 4); SliderBar.Position = UDim2.new(0.04, 0, 0.65, 0); SliderBar.BackgroundColor3 = Color_CardDark; SliderBar.BorderSizePixel = 0; Instance.new("UICorner", SliderBar)
     local SliderFill = Instance.new("Frame", SliderBar); SliderFill.Size = UDim2.new(0.5, 0, 1, 0); SliderFill.BackgroundColor3 = Color_NeonBlue; SliderFill.BorderSizePixel = 0; Instance.new("UICorner", SliderFill)
 
     local dragging = false
@@ -607,10 +694,10 @@ local function IniciarScriptOriginal()
         end
     end)
 
-    -- Selector de Parte del Cuerpo
-    local AimPartBtn = Instance.new("TextButton", LeftScrollFrame); AimPartBtn.Size = UDim2.new(1, -6, 0, 38); AimPartBtn.BackgroundColor3 = Color_Card; AimPartBtn.BorderSizePixel = 0
-    AimPartBtn.Text = "   Fijar en: " .. Settings.AimPart; AimPartBtn.TextColor3 = Color_TextMain; AimPartBtn.Font = Enum.Font.GothamBold; AimPartBtn.TextSize = 13; AimPartBtn.TextXAlignment = "Left"; AimPartBtn.LayoutOrder = 2
-    Instance.new("UICorner", AimPartBtn).CornerRadius = UDim.new(0, 12); Instance.new("UIStroke", AimPartBtn).Color = Color_Border
+    -- Selector de Parte del Cuerpo (Altura Reducida)
+    local AimPartBtn = Instance.new("TextButton", LeftPanelFrame); AimPartBtn.Size = UDim2.new(1, -6, 0, 30); AimPartBtn.BackgroundColor3 = Color_Card; AimPartBtn.BorderSizePixel = 0
+    AimPartBtn.Text = "   Fijar en: " .. Settings.AimPart; AimPartBtn.TextColor3 = Color_TextMain; AimPartBtn.Font = Enum.Font.GothamBold; AimPartBtn.TextSize = 11; AimPartBtn.TextXAlignment = "Left"; AimPartBtn.LayoutOrder = 2
+    Instance.new("UICorner", AimPartBtn).CornerRadius = UDim.new(0, 10); Instance.new("UIStroke", AimPartBtn).Color = Color_Border
 
     local aimOptions = {"Head", "Chest", "Hand", "Leg"}
     AimPartBtn.MouseButton1Click:Connect(function()
@@ -620,23 +707,23 @@ local function IniciarScriptOriginal()
         AimPartBtn.Text = "   Fijar en: " .. Settings.AimPart
     end)
 
-    -- Generador de Toggles
+    -- Generador de Toggles de Tamaño Reducido
     local function AddToggle(name, key, order)
-        local btn = Instance.new("TextButton", LeftScrollFrame); btn.Size = UDim2.new(1, -6, 0, 38); btn.BorderSizePixel = 0; btn.Text = "    " .. name
-        btn.Font = Enum.Font.GothamBold; btn.TextSize = 13; btn.TextXAlignment = "Left"; btn.LayoutOrder = order; Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
-        local bStroke = Instance.new("UIStroke", btn); bStroke.Thickness = 1.2
-        local switchTrack = Instance.new("Frame", btn); switchTrack.Size = UDim2.new(0, 42, 0, 22); switchTrack.Position = UDim2.new(1, -55, 0.5, -11); switchTrack.BorderSizePixel = 0; Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
-        local switchBall = Instance.new("Frame", switchTrack); switchBall.Size = UDim2.new(0, 16, 0, 16); switchBall.Position = UDim2.new(0, 3, 0.5, -8); switchBall.BackgroundColor3 = Color_TextMain; Instance.new("UICorner", switchBall).CornerRadius = UDim.new(1, 0)
+        local btn = Instance.new("TextButton", LeftPanelFrame); btn.Size = UDim2.new(1, -6, 0, 30); btn.BorderSizePixel = 0; btn.Text = "    " .. name
+        btn.Font = Enum.Font.GothamBold; btn.TextSize = 11; btn.TextXAlignment = "Left"; btn.LayoutOrder = order; Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+        local bStroke = Instance.new("UIStroke", btn); bStroke.Thickness = 1.1
+        local switchTrack = Instance.new("Frame", btn); switchTrack.Size = UDim2.new(0, 34, 0, 18); switchTrack.Position = UDim2.new(1, -45, 0.5, -9); switchTrack.BorderSizePixel = 0; Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
+        local switchBall = Instance.new("Frame", switchTrack); switchBall.Size = UDim2.new(0, 12, 0, 12); switchBall.Position = UDim2.new(0, 3, 0.5, -6); switchBall.BackgroundColor3 = Color_TextMain; Instance.new("UICorner", switchBall).CornerRadius = UDim.new(1, 0)
 
         local function updateVisuals(isInitial)
             if not isInitial then if Settings[key] then PlayWindToggleOn() else PlayWindToggleOff() end end
             if Settings[key] then
                 FastTween(btn, {BackgroundColor3 = Color_NeonBlue}); FastTween(bStroke, {Color = Color_NeonBlue})
-                FastTween(switchTrack, {BackgroundColor3 = Color_CardDark}); FastTween(switchBall, {Position = UDim2.new(1, -19, 0.5, -8)})
+                FastTween(switchTrack, {BackgroundColor3 = Color_CardDark}); FastTween(switchBall, {Position = UDim2.new(1, -15, 0.5, -6)})
                 btn.TextColor3 = Color_TextMain
             else
                 FastTween(btn, {BackgroundColor3 = Color_Card}); FastTween(bStroke, {Color = Color_Border})
-                FastTween(switchTrack, {BackgroundColor3 = Color_NeonBlueDim}); FastTween(switchBall, {Position = UDim2.new(0, 3, 0.5, -8)})
+                FastTween(switchTrack, {BackgroundColor3 = Color_NeonBlueDim}); FastTween(switchBall, {Position = UDim2.new(0, 3, 0.5, -6)})
                 btn.TextColor3 = Color_TextSub
             end
         end
@@ -645,9 +732,6 @@ local function IniciarScriptOriginal()
         btn.MouseButton1Click:Connect(function() 
             Settings[key] = not Settings[key]; 
             updateVisuals(false); 
-            if key == "HideName" then 
-                UpdateHideName() 
-            end 
         end)
 
         updateVisuals(true)
@@ -655,14 +739,14 @@ local function IniciarScriptOriginal()
 
     AddToggle("Aimbot Assist", "Aimbot", 3)
     AddToggle("Estabilizador NoRecoil", "NoRecoil", 4)
-    AddToggle("Visuales ESP Jugadores", "ESP", 5)
-    AddToggle("Mostrar Nombres", "NameESP", 6)
-    AddToggle("Mostrar Distancia", "DistanceESP", 7)
-    AddToggle("Chams (Glow Esqueleto)", "Chams", 8)
-    AddToggle("Radar de Armas Portadas", "WeaponESP", 9)
-    AddToggle("Barra de Vida Dinámica", "HPBar", 10)
-    AddToggle("Circulo FOV Visible", "FOVVisible", 11)
-    AddToggle("Modo Incógnito (Hide Name)", "HideName", 12)
+    AddToggle("Name 1 (Tu nombre -> 1)", "NameOne", 5) 
+    AddToggle("Visuales ESP Jugadores", "ESP", 6)
+    AddToggle("Mostrar Nombres", "NameESP", 7)
+    AddToggle("Mostrar Distancia", "DistanceESP", 8)
+    AddToggle("Esqueleto (Skeleton ESP)", "SkeletonESP", 9) -- Modificado
+    AddToggle("Radar de Armas Portadas", "WeaponESP", 10)
+    AddToggle("Barra de Vida Dinámica", "HPBar", 11)
+    AddToggle("Circulo FOV Visible", "FOVVisible", 12)
 
     -- PANEL DE WHITELIST (LADO DERECHO)
     local RightPanel = Instance.new("Frame", ContentFrame)
