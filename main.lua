@@ -3,7 +3,7 @@ repeat task.wait() until game:IsLoaded()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- ===
+-- ==================== CONFIGURACIÓN DE PAGA (LLAVE Y COMPRADORES) ====================
 local KEY_CORRECTA = "PIRU-HUB" -- La contraseña que deben escribir
 local USUARIOS_PERMITIDOS = {
     [8216624047] = true,   -- Comprador 1
@@ -12,7 +12,7 @@ local USUARIOS_PERMITIDOS = {
     [9763328724] = true,    -- Comprador 4
     [0] = true,            -- Comprador 5
 }
--- ===
+-- ====================================================================================
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
