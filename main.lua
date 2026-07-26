@@ -9,7 +9,7 @@ local USUARIOS_PERMITIDOS = {
     [10603802243] = true,  -- Comprador 2
     [7149173878] = true,    -- Comprador 3
     [11004267608] = true,    -- Comprador 4
-    [149173878] = true,            -- Comprador 5
+    [4891619315] = true,            -- Comprador 5
 }
 -- ====================================================================================
 
